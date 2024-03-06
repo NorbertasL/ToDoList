@@ -31,7 +31,7 @@ class ToDoLogic():
         print("New Item Logic")
 
 class ToDoGUI(tk.Tk):    
-    __DEFAULT_CONGIF: dict = {
+    __DEFAULT_CONGIFS: dict = {
         "root_title": "ToDo List",
         "root_size": "400x600"
         }
@@ -46,21 +46,22 @@ class ToDoGUI(tk.Tk):
     
     def __create_main_window(self):
         #Main windows setup/styling
-        self.title(ToDoGUI.__DEFAULT_CONGIF["root_title"])
-        self.geometry(ToDoGUI.__DEFAULT_CONGIF["root_size"])
+        self.title(ToDoGUI.__DEFAULT_CONGIFS["root_title"])
+        self.geometry(ToDoGUI.__DEFAULT_CONGIFS["root_size"])
        
         
         self.__list_objects: list[ToDoEntry] = [ToDoEntry("TEST One"), ToDoEntry("TEST Two")]
         self.__todo_list_items: tk.Variable = tk.Variable(value= self.__list_objects)
         self.__listbox: tk.Listbox = tk.Listbox(
             self,
-            height = 20,
             listvariable=self.__todo_list_items
             )
         self.__listbox.configure(font=('Helvetica', 12))
         self.__listbox.bind('<Double-1>', self.__on_even_doubleclick)
         self.__listbox.bind('<Button-3>', self.__on_even_rightclick)
         self.__listbox.pack()
+        
+        self.update()
         
         
         
@@ -94,11 +95,13 @@ class ToDoGUI(tk.Tk):
         self.update()
         
     def __on_delete_entry(self, index: int):
-        del(self.__list_objects[index])
-        self.update()
+        if messagebox.askyesno("", f"Are You sure you want to delete {self.__list_objects[index]}?"):
+            del(self.__list_objects[index])
+            self.update()
 
     def update(self):
         self.__todo_list_items.set(self.__list_objects)
+        self.__listbox.configure(height = len(self.__list_objects))
         
     def __add_todo(self):
         def show_add_windows(on_new_entry: Callable):
