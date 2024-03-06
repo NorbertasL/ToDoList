@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import Toplevel, messagebox
+from turtle import update
 from typing import Callable
 
 class ToDoEntry():
     def __init__(self, title: str, info:str = ""):
-        
+        self.__is_done = False
         self.__title: str = title
         self.__info: str = info 
         
@@ -15,7 +16,14 @@ class ToDoEntry():
         return self.__info
     
     def __str__(self) -> str:
-        return self.__title
+        temp:str = self.__title 
+        if self.__is_done:
+           temp = '\u0336'.join(temp)
+        return temp
+    
+    def mark_done(self):
+        self.__is_done = True
+        
 
 class ToDoLogic():
    
@@ -40,6 +48,7 @@ class ToDoGUI(tk.Tk):
         #Main windows setup/styling
         self.title(ToDoGUI.__DEFAULT_CONGIF["root_title"])
         self.geometry(ToDoGUI.__DEFAULT_CONGIF["root_size"])
+       
         
         self.__list_objects: list[ToDoEntry] = [ToDoEntry("TEST One"), ToDoEntry("TEST Two")]
         self.__todo_list_items: tk.Variable = tk.Variable(value= self.__list_objects)
@@ -48,7 +57,7 @@ class ToDoGUI(tk.Tk):
             height = 20,
             listvariable=self.__todo_list_items
             )
-        
+        self.__listbox.configure(font=('Helvetica', 12))
         self.__listbox.bind('<Double-1>', self.__on_even_doubleclick)
         self.__listbox.bind('<Button-3>', self.__on_even_rightclick)
         self.__listbox.pack()
@@ -63,18 +72,32 @@ class ToDoGUI(tk.Tk):
             ).pack()
         
     def __on_even_doubleclick(self, event:tk.Event):
+        if(len(self.__listbox.curselection()) == 0):
+            return
         index:int = event.widget.curselection()[0]
         print(f"Double Click on Event Index:{index} Object:{self.__list_objects[index]}")
+        self.__list_objects[index].mark_done()
+        self.update()
         
     def __on_even_rightclick(self, event: tk.Event):
         self.__listbox.selection_clear(0,tk.END) # clears focus so we can only select one
         self.__listbox.selection_set(self.__listbox.nearest(event.y)) # selects the element
+        if(len(self.__listbox.curselection()) == 0):
+            return
         index:int = self.__listbox.curselection()[0]
         print(f"Right Click on Event Index:{index} Object:{self.__list_objects[index]}")
+        self.__on_delete_entry(index)
         
         
     def __on_new_entry(self, entry: ToDoEntry):
         self.__list_objects.append(entry)
+        self.update()
+        
+    def __on_delete_entry(self, index: int):
+        del(self.__list_objects[index])
+        self.update()
+
+    def update(self):
         self.__todo_list_items.set(self.__list_objects)
         
     def __add_todo(self):
@@ -110,7 +133,7 @@ class ToDoGUI(tk.Tk):
 
             btn_cancel = tk.Button(add_task_widnow, 
                                    text = "Cancel",
-                                   command = lambda: add_task_widnow.destroy()
+                                   command = add_task_widnow.destroy
                         )
             btn_cancel.pack()
             
