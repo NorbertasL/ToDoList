@@ -1,6 +1,6 @@
+
 import tkinter as tk
 from tkinter import Toplevel, messagebox
-from turtle import update
 from typing import Callable
 
 class ToDoEntry():
@@ -111,6 +111,9 @@ class ToDoGUI(tk.Tk):
                 
             add_task_widnow: Toplevel = Toplevel(self)
             add_task_widnow.title("New ToDo!")
+            
+            #TODO
+            add_task_widnow.geometry('%dx%d+%d+%d' % (100, 200, self.winfo_pointerx()-100/2, self.winfo_pointery()-50))
             
             add_task_widnow.attributes('-topmost', True)#make it alwasy on top
             
