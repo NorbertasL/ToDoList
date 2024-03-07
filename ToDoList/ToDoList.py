@@ -2,12 +2,14 @@
 import tkinter as tk
 from tkinter import Toplevel, messagebox
 from typing import Callable
+from datetime import datetime
 
 class ToDoEntry():
     def __init__(self, title: str, info:str = ""):
         self.__is_done = False
         self.__title: str = title
         self.__info: str = info 
+        self.__creation_date: datetime = datetime.now()
         
     def get_title(self) -> str:
         return self.__title
@@ -16,7 +18,7 @@ class ToDoEntry():
         return self.__info
     
     def __str__(self) -> str:
-        temp:str = self.__title 
+        temp:str = f"{self.__creation_date.hour:02d}:{self.__creation_date.minute:02d} {self.__title}"
         if self.__is_done:
            temp = '\u0336'.join(temp)
         return temp
@@ -31,9 +33,11 @@ class ToDoLogic():
         print("New Item Logic")
 
 class ToDoGUI(tk.Tk):    
-    __DEFAULT_CONGIFS: dict = {
+    DEFAULT_CONGIFS: dict = {
+        "root_w": 400,
+        "root_h": 800,
         "root_title": "ToDo List",
-        "root_size": "400x600"
+        
         }
     
     def __init__(self):
@@ -46,8 +50,8 @@ class ToDoGUI(tk.Tk):
     
     def __create_main_window(self):
         #Main windows setup/styling
-        self.title(ToDoGUI.__DEFAULT_CONGIFS["root_title"])
-        self.geometry(ToDoGUI.__DEFAULT_CONGIFS["root_size"])
+        self.title(ToDoGUI.DEFAULT_CONGIFS["root_title"])
+        self.geometry(f"{ToDoGUI.DEFAULT_CONGIFS['root_w']}x{ToDoGUI.DEFAULT_CONGIFS['root_h']}")
        
         
         self.__list_objects: list[ToDoEntry] = [ToDoEntry("TEST One"), ToDoEntry("TEST Two")]
@@ -60,6 +64,7 @@ class ToDoGUI(tk.Tk):
         self.__listbox.bind('<Double-1>', self.__on_even_doubleclick)
         self.__listbox.bind('<Button-3>', self.__on_even_rightclick)
         self.__listbox.pack()
+       
         
         self.update()
         
