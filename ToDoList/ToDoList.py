@@ -1,7 +1,7 @@
 
 import tkinter as tk
-from tkinter import Toplevel, messagebox
-from types import MappingProxyType
+from tkinter import Button, Canvas, Frame, Toplevel, messagebox
+from types import MappingProxyType #MappingProxyType is a immutable dictionary
 from typing import Callable
 from datetime import datetime
 
@@ -21,7 +21,7 @@ class ToDoEntry():
     def __str__(self) -> str:
         temp:str = f"{self.__creation_date.hour:02d}:{self.__creation_date.minute:02d} {self.__title}"
         if self.__is_done:
-           temp = '\u0336'.join(temp)
+           temp ='\u0338'+ '\u0337'.join(temp)
         return temp
     
     def mark_done(self):
@@ -56,9 +56,12 @@ class ToDoLogic():
 class ToDoGUI(tk.Tk):    
     DEFAULT_CONGIFS: MappingProxyType = MappingProxyType({
         "root_w": 400,
-        "root_h": 800,
+        "root_h": 500,
         "root_title": "ToDo List",
-        })
+        "main_font" : ("Arial", 25),
+        "main_colour": "#ffd900",
+        "second_colour": "#FFCC00",
+        }) 
     
     def __init__(self):
         super().__init__()
@@ -66,21 +69,56 @@ class ToDoGUI(tk.Tk):
 
         #self.__root: tk.Tk  = tk.Tk()
         self.__create_main_window()
-  
+        self.__offset_x = 0
+        self.__offset_y = 0
     
     def __create_main_window(self):
+        def create_custom_title_bar():
+            def move_window(event):#allows me to move window
+                self.geometry('+%d+%d' % (event.x_root-self.__offset_x, event.y_root-self.__offset_y))
+                
+            def start_move(event):#calulates windows pos relative to mouse and not 0 0
+                self.__offset_x = event.x
+                self.__offset_y = event.y   
+                
+            self.overrideredirect(True)
+            # Create a custom frame for the title bar
+            title_bar = tk.Frame(self, bg=ToDoGUI.DEFAULT_CONGIFS["second_colour"], height=30)
+            title_bar.pack(fill=tk.X)
+            # Add a close button to exit the window
+            close_button = tk.Button(title_bar, 
+                                     text='X', 
+                                     bg=ToDoGUI.DEFAULT_CONGIFS["second_colour"], 
+                                     fg="black", 
+                                     relief='flat',
+                                     borderwidth=0,
+                                     command=self.destroy)
+            close_button.pack(side=tk.RIGHT)
+            
+            title_bar.bind("<ButtonPress-1>", start_move)
+            title_bar.bind("<B1-Motion>", move_window)
+            
+
         #Main windows setup/styling
+        create_custom_title_bar()
         self.title(ToDoGUI.DEFAULT_CONGIFS["root_title"])
-        self.geometry(f"{ToDoGUI.DEFAULT_CONGIFS['root_w']}x{ToDoGUI.DEFAULT_CONGIFS['root_h']}")
-       
+        self.geometry('%dx%d' % (ToDoGUI.DEFAULT_CONGIFS['root_w'], ToDoGUI.DEFAULT_CONGIFS['root_h'])) # parsing string into widthxheight string
+        self.config(bg=ToDoGUI.DEFAULT_CONGIFS["main_colour"]) #RGB
         
         #self.__list_objects: list[ToDoEntry] = [ToDoEntry("TEST One"), ToDoEntry("TEST Two")]
         #self.__todo_list_items: tk.Variable = tk.Variable(value= self.__list_objects)
         self.__listbox: tk.Listbox = tk.Listbox(self)
-        self.__listbox.configure(font=('Helvetica', 12))
+        self.__listbox.configure(font=('Helvetica', 12),
+                                 bg = ToDoGUI.DEFAULT_CONGIFS["main_colour"],
+                                 borderwidth=0, 
+                                 highlightthickness=0,
+                                 activestyle = "none", # removes selection undeline
+                                 selectbackground = ToDoGUI.DEFAULT_CONGIFS["second_colour"],
+                                 selectforeground = "black",
+                                 ) 
         self.__listbox.bind('<Double-1>', self.__on_even_doubleclick)
         self.__listbox.bind('<Button-3>', self.__on_even_rightclick)
-        self.__listbox.pack()
+        self.__listbox.pack(fill=tk.X, padx=10)
        
         
         self.reload_list()
@@ -88,11 +126,23 @@ class ToDoGUI(tk.Tk):
         
         
         #Add ToDo Item Button
-        tk.Button(
-            self, 
-            text = "Add", 
-            command = self.__add_todo
-            ).pack()
+
+        close_button = tk.Button(self, 
+                                     text='+', 
+                                     font = (ToDoGUI.DEFAULT_CONGIFS["main_font"][0], 50),#just want the font, we using custom size
+                                     bg=ToDoGUI.DEFAULT_CONGIFS["main_colour"], 
+                                     fg=ToDoGUI.DEFAULT_CONGIFS["second_colour"], 
+                                     activebackground=ToDoGUI.DEFAULT_CONGIFS["main_colour"],
+                                     relief='flat',
+                                     borderwidth=0,
+                                     command=self.__add_todo)
+        close_button.pack()
+
+        # tk.Button(
+        #     self, 
+        #     text = "Add", 
+        #     command = self.__add_todo
+        #     ).pack()
         
     def __on_even_doubleclick(self, event:tk.Event):
         
@@ -126,7 +176,8 @@ class ToDoGUI(tk.Tk):
     def reload_list(self):
         #self.__listbox.destroy()
         self.__listbox.delete(0, tk.END)
-        self.__listbox.insert(tk.END, *self.__logic.get_entry_display_strings())
+        for entry in self.__logic.get_entry_display_strings():       
+            self.__listbox.insert(tk.END, entry)
         self.__listbox.config(height = self.__listbox.size())
         #self.__todo_list_items.set(self.__list_objects)
         #self.__listbox.configure(height = len(self.__list_objects))
