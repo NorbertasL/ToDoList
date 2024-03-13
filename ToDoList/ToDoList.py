@@ -426,6 +426,9 @@ class ToDoGUI(tk.Tk):
                 '''
                 Called when we want to save the info the the add box
                 '''
+                if not 0 < len(title_var.get()) < 21:# making sure title is not too long
+                    self.error_msgbox("Title lenght has to be between 1 and 20")
+                    return
                 self.__on_new_entry(MappingProxyType({"title": title_var.get(), #Getting text from box var
                                                       "info": info_var.get(), #Getting text from box var
                                                       "date": datetime.now(), #Time when the task was created
@@ -442,7 +445,7 @@ class ToDoGUI(tk.Tk):
             add_task_widnow.geometry('%dx%d+%d+%d' % (self.DEFAULT_CONGIFS["add_box_w"], 
                                                       self.DEFAULT_CONGIFS["add_box_h"], 
                                                       self.winfo_x() + self.DEFAULT_CONGIFS["root_w"] - (self.DEFAULT_CONGIFS["add_box_w"]*1.5), 
-                                                      self.winfo_y() + self.DEFAULT_CONGIFS["root_h"] - (self.DEFAULT_CONGIFS["add_box_h"]*1.5)
+                                                      self.winfo_y() + self.DEFAULT_CONGIFS["root_h"]/2 - (self.DEFAULT_CONGIFS["add_box_h"])
                                                       )
                                      )
             
