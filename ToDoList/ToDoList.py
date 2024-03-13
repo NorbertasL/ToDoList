@@ -110,13 +110,21 @@ class DatabaseManager:
             return successful, return_list # using finally block to make sure something is always returned
         
     @classmethod
-    def verify_db(cls) -> bool:
+    def verify_db(cls, table_name:str = "") -> bool:
         '''
         Checks if database and table exists, if not it creates them
-        
+        Args:
+            table_name(str): optional table name, DEFAULT will use static MAIN_TABLE
         Retruns:
             bool: connection good?
+            
+        ##DOCTEST###
+        >>>verify_db()
+        True
         '''
+        # if no or empry table name is provided it will use static constant MAIN_TABLE
+        table_name = cls.MAIN_TABLE if table_name == "" else table_name 
+        
         main_table_sql:str = f'''CREATE TABLE IF NOT EXISTS {cls.MAIN_TABLE}(_ID INTEGER PRIMARY KEY NOT NULL,date TEXT NOT NULL, title TEXT NOT NULL,info TEXT,is_done BOOL NOT NULL);'''  
         return cls.execure_sql_querry(main_table_sql, True)[0] # only returning the state bool
     
@@ -429,6 +437,7 @@ class ToDoGUI(tk.Tk):
                 if not 0 < len(title_var.get()) < 21:# making sure title is not too long
                     self.error_msgbox("Title lenght has to be between 1 and 20")
                     return
+                
                 self.__on_new_entry(MappingProxyType({"title": title_var.get(), #Getting text from box var
                                                       "info": info_var.get(), #Getting text from box var
                                                       "date": datetime.now(), #Time when the task was created
