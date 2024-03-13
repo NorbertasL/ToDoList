@@ -4,6 +4,7 @@ from types import MappingProxyType #MappingProxyType is a immutable dictionary
 from typing import Callable # for hinting a fucntion as parameter
 from datetime import datetime
 import sqlite3# local database
+import doctest
 
 class ToDoEntry():
     def __init__(self, id:int, date:str, title: str, info:str = "", isDone:bool = False):
@@ -14,11 +15,11 @@ class ToDoEntry():
             title(str)
             info(str): extra information
         '''
-        self.__id = id
+        self.__id: int = id
         self.__creation_date: str = date
         self.__title: str = title
         self.__info: str = info  
-        self.__is_done = isDone
+        self.__is_done: bool = isDone
         
     def get_id(self) -> int:
         '''
@@ -69,7 +70,7 @@ class ToDoEntry():
         '''
         return self.__is_done
         
-class Database_Manager:
+class DatabaseManager:
     '''
     Statsic class that manages the local database(SQLite) connection/querries
     '''
@@ -116,7 +117,7 @@ class Database_Manager:
         Retruns:
             bool: connection good?
         '''
-        main_table_sql:str = f'''CREATE TABLE IF NOT EXISTS {cls.MAIN_TABLE}(_ID INTEGER PRIMARY KEY,date TEXT, title TEXT,info TEXT,is_done BOOL);'''  
+        main_table_sql:str = f'''CREATE TABLE IF NOT EXISTS {cls.MAIN_TABLE}(_ID INTEGER PRIMARY KEY NOT NULL,date TEXT NOT NULL, title TEXT NOT NULL,info TEXT,is_done BOOL NOT NULL);'''  
         return cls.execure_sql_querry(main_table_sql, True)[0] # only returning the state bool
     
     @classmethod
@@ -186,8 +187,8 @@ class ToDoLogic():
         '''
         self.__entry_list: list[ToDoEntry] = []
         self.__list_change_callback = list_change_callback
-        self.__error_callback = error_callback # method that displays an error box with a custom message
-        if not Database_Manager.verify_db():
+        self.__error_callback = error_callback # method callback that displays an error box with a custom message
+        if not DatabaseManager.verify_db():
              self.__error_callback("Database Verification Issue")
            
           
@@ -211,7 +212,7 @@ class ToDoLogic():
            val(MappingProxyType): immutable dic of keys(columbs in db) and values
         '''  
     
-        if not Database_Manager.add_entry(val):
+        if not DatabaseManager.add_entry(val):
             self.__error_callback("Failed To Add Entry")
         self.update_entry_list()
         
@@ -223,7 +224,7 @@ class ToDoLogic():
         Args:
             index(int): index in the list box
         '''
-        if not Database_Manager.delete_entry(self.__entry_list[index].get_id()):
+        if not DatabaseManager.delete_entry(self.__entry_list[index].get_id()):
             self.__error_callback("Failed To Remove Entry")
         self.update_entry_list()
         
@@ -235,7 +236,7 @@ class ToDoLogic():
             index(int): index of the entry in the listbox
             status(bool): new status for the entry
         '''
-        if not Database_Manager.change_done_status(self.__entry_list[index].get_id(), status):
+        if not DatabaseManager.change_done_status(self.__entry_list[index].get_id(), status):
             self.__error_callback("Failed To Update Entry")
         self.update_entry_list()
         
@@ -258,7 +259,7 @@ class ToDoLogic():
         '''
 
         self.__entry_list = [] #reseting it
-        successful,  entries = Database_Manager.get_entries()
+        successful,  entries = DatabaseManager.get_entries()
         if not successful:
             self.__error_callback("Failed To Get Entry")
             return # not updating GUI
@@ -269,16 +270,17 @@ class ToDoLogic():
         
 class ToDoGUI(tk.Tk):   
     # Some default configs to be used in the GUI
+    # Temorary solution. These setting should be in a config or xml file.
     DEFAULT_CONGIFS: MappingProxyType = MappingProxyType({
         "root_w": 400,
         "root_h": 500,
         "add_box_w": 200,
-        "add_box_h": 200,
+        "add_box_h": 100,
         "root_title": "ToDo List",
         "main_font" : ("Helvetica", 25),
         "main_colour": "#ffd900",
         "second_colour": "#FFCC00",
-        "list_box_row_max": 10,
+        "list_box_row_max": 10,# this should really be calculated based on root_h and front size
         }) 
     
     def __init__(self):
@@ -447,32 +449,54 @@ class ToDoGUI(tk.Tk):
             add_task_widnow.attributes('-topmost', True)#make it alwasy on top
             #add_task_widnow.config(bg=ToDoGUI.DEFAULT_CONGIFS["main_colour"]) 
             
-            add_task_widnow.grab_set()#lock all other window interactions
+            # add_task_widnow.grab_set()#lock all other window interactions
             
+            # #var to store the text in title
+            # title_var: tk.StringVar = tk.StringVar(add_task_widnow)
+            # title = tk.Entry(add_task_widnow, textvariable = title_var)
+            # title.pack()
+            
+            # #var to store the text in info
+            # info_var: tk.StringVar = tk.StringVar(add_task_widnow)
+            # info = tk.Entry(add_task_widnow, textvariable = info_var)
+            # info.pack()
+
+            add_task_widnow.resizable(False, False) #making window NOT resizible W and H
+            
+            title_label = tk.Label(add_task_widnow, text="Title:")
+            title_label.grid(row=0, column=0)
+
             #var to store the text in title
             title_var: tk.StringVar = tk.StringVar(add_task_widnow)
-            title = tk.Entry(add_task_widnow, textvariable = title_var)
-            
-            title.insert(0, "Title")
-            title.pack()
-            
+            title_entry = tk.Entry(add_task_widnow, textvariable = title_var, width=25)
+            title_entry.grid(row=0, column=1)
+
+            info_label = tk.Label(add_task_widnow, text="Info:")
+            info_label.grid(row=1, column=0)
+
             #var to store the text in info
             info_var: tk.StringVar = tk.StringVar(add_task_widnow)
-            info = tk.Entry(add_task_widnow, textvariable = info_var)
-            info.insert(0, "Extra Info!")
-            info.pack()
+            info_text = tk.Entry(add_task_widnow, textvariable = info_var, width=25)
+            info_text.grid(row=1, column=1)
+
+            save_button = tk.Button(add_task_widnow, text="Save", command=on_save)
+            save_button.grid(row=2, column=1)
+
+            cancel_button = tk.Button(add_task_widnow, text="Cancel", command=add_task_widnow.destroy)
+            cancel_button.grid(row=3, column=1)
+
             
             #Save and Cancel buttons are not used anywhere else, so dont need them in varibales
-            Button(add_task_widnow, 
-                   text = "Save", 
-                   command = on_save
-                   ).pack()
+            # Button(add_task_widnow, 
+            #        text = "Save", 
+            #        command = on_save
+            #        ).pack()
              
 
-            Button(add_task_widnow, 
-                   text = "Cancel",
-                   command = add_task_widnow.destroy
-                   ).pack()
+            # Button(add_task_widnow, 
+            #        text = "Cancel",
+            #        command = add_task_widnow.destroy
+            #        ).pack()
   
         show_add_windows()#creates/displays the add window
         
