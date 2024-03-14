@@ -119,7 +119,7 @@ class DatabaseManager:
             bool: connection good?
             
         ##DOCTEST###
-        >>>verify_db()
+        >>> DatabaseManager.verify_db()
         True
         '''
         # if no or empry table name is provided it will use static constant MAIN_TABLE
@@ -183,6 +183,7 @@ class DatabaseManager:
             statsus(bool): new status of the entry
         '''
         sql_querry:str = f"UPDATE {cls.MAIN_TABLE} SET is_done={status} WHERE _ID={id};"
+        #print("change_done_status querrie generare:", sql_querry)
         return cls.execure_sql_querry(sql_querry, True)[0]
   
 class ToDoLogic():
@@ -206,7 +207,10 @@ class ToDoLogic():
         
         Returns:
             tuple[str]: each elements represent a ToDoEntry Object
+
         '''
+        
+        
         return_list: list[str] = []
         for entry in self.__entry_list:
             return_list.append(str(entry))
@@ -497,18 +501,7 @@ class ToDoGUI(tk.Tk):
             cancel_button = tk.Button(add_task_widnow, text="Cancel", command=add_task_widnow.destroy)
             cancel_button.grid(row=3, column=1)
 
-            
-            #Save and Cancel buttons are not used anywhere else, so dont need them in varibales
-            # Button(add_task_widnow, 
-            #        text = "Save", 
-            #        command = on_save
-            #        ).pack()
-             
 
-            # Button(add_task_widnow, 
-            #        text = "Cancel",
-            #        command = add_task_widnow.destroy
-            #        ).pack()
   
         show_add_windows()#creates/displays the add window
         
@@ -518,4 +511,5 @@ class ToDoGUI(tk.Tk):
         self.mainloop()
         
 if __name__ == "__main__":
+    #doctest.testmod()
     ToDoGUI().start()
